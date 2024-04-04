@@ -1,7 +1,7 @@
 <?php
 
-define('USUARIO', 'marr'); /// root
-define('SENHA', 'marR.123#'); // ''
+define('USUARIO', 'root'); /// root
+define('SENHA', ''); // ''
 define('HOST', 'localhost'); 
 define('PORT', '3306'); 
 define('DB', 'contatos'); 
