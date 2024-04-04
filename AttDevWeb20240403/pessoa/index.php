@@ -11,17 +11,17 @@ include_once('pessoa.php');
 </head>
 <body>
     <!-- Formulário de Cadastro -->
-    <h1>CRUD de Contatos</h1>
+    <h1>CRUD de Notícias</h1>
     <h3><?=$msg?></h3>
     <form action="pessoa.php" method="post">
         <fieldset>
-            <legend>Cadastro de Contatos</legend>        
+            <legend>Cadastro de Notícias</legend>        
                 <label for="id">Id:</label>
                 <input type="text" name="id" id="id" value="<?=isset($contato)?$contato->getId():0 ?>" readonly>
-                <label for="nome">Nome:</label>
-                <input type="text" name="nome" id="nome" value="<?php if(isset($contato)) echo $contato->getNome()?>">
-                <label for="telefone">Telefone:</label>
-                <input type="text" name="telefone" id="telefone" value="<?php if(isset($contato)) echo $contato->getTelefone()?>">
+                <label for="nome">Título:</label>
+                <input type="text" name="titulo" id="titulo" value="<?php if(isset($contato)) echo $contato->getNome()?>">
+                <label for="conteudo">Conteúdo:</label>
+                <textarea name="conteudo" id="conteudo" cols="30" rows="10" value="<?php if(isset($contato)) echo $contato->getTelefone()?>"></textarea>
                 <button type='submit' name='acao' value='salvar'>Salvar</button>
                 <button type='submit' name='acao' value='excluir'>Excluir</button>
                 <button type='reset'>Cancelar</button>
