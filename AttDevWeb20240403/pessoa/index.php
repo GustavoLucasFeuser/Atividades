@@ -21,7 +21,7 @@ include_once('pessoa.php');
                 <label for="nome">Título:</label>
                 <input type="text" name="titulo" id="titulo" value="<?php if(isset($contato)) echo $contato->getNome()?>">
                 <label for="conteudo">Conteúdo:</label>
-                <textarea name="conteudo" id="conteudo" cols="30" rows="10" value="<?php if(isset($contato)) echo $contato->getTelefone()?>"></textarea>
+                <textarea name="conteudo" id="conteudo" cols="30" rows="1" value="<?php if(isset($contato)) echo $contato->getTelefone()?>"></textarea>
                 <button type='submit' name='acao' value='salvar'>Salvar</button>
                 <button type='submit' name='acao' value='excluir'>Excluir</button>
                 <button type='reset'>Cancelar</button>
