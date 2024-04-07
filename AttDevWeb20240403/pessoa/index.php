@@ -8,32 +8,47 @@ include_once('pessoa.php');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listagem de notícias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
     <!-- Formulário de Cadastro -->
     <h1>CRUD de Notícias</h1>
     <h3><?=$msg?></h3>
     <form action="pessoa.php" method="post">
+        <div style="background-color: black; height: 400px; width: 400px; margin-left: 40%; border-radius: 10px;">
+        <div style="text-align: center;">
         <fieldset>
-            <legend>Cadastro de Notícias</legend>        
-                <label for="id">Id:</label>
-                <input type="text" name="id" id="id" value="<?=isset($contato)?$contato->getId():0 ?>" readonly>
-                <label for="nome">Título:</label>
-                <input type="text" name="titulo" id="titulo" value="<?php if(isset($contato)) echo $contato->getTitulo()?>">
-                <label for="conteudo">Conteúdo:</label>
-                <input type="text" name="conteudo" id="conteudo" value="<?php if(isset($contato)) echo $contato->getConteudo()?>">
-                <button type='submit' name='acao' value='salvar'>Salvar</button>
-                <button type='submit' name='acao' value='excluir'>Excluir</button>
-                <button type='reset'>Cancelar</button>
+            <legend style="color: white; text-align: center;">Cadastro de Notícias</legend>
+            <div class="col-md-6">       
+                <label for="id" style="color:white;">Id:</label>
+                <input class="form-control" type="text" name="id" id="id" value="<?=isset($contato)?$contato->getId():0 ?>" style="margin-left: 45%;"readonly>
+            </div>
+                <div class="col-md-6">        
+                    <label for="nome" style="color:white;">Título:</label>
+                    <input class="form-control" type="text" name="titulo" id="titulo" value="<?php if(isset($contato)) echo $contato->getTitulo()?>" style="margin-left: 45%;">
+                </div>
+                <div class="col-md-6">
+                <label for="conteudo" style="color:white;">Conteúdo:</label>
+                <input class="form-control" type="text" name="conteudo" id="conteudo" value="<?php if(isset($contato)) echo $contato->getConteudo()?>" style="margin-left: 45%;">
+                </div>
+                <button type='submit' name='acao' value='salvar' class="btn btn-dark" >Salvar</button>
+                <button type='submit' name='acao' value='excluir' class="btn btn-dark">Excluir</button>
+
+                <button type='reset' class="btn btn-dark">Cancelar</button>
         </fieldset>
+        </div>
+        </div>
     </form>
     <hr>
     <!-- Formulário de pesquisa -->
     <form action="" method="get">
         <fieldset>
             <legend>Pesquisa</legend>
+            <div class="col-md-2">
             <label for="busca">Busca:</label>
-            <input type="text" name="busca" id="busca" value="">
+            <input class="form-control" type="text" name="busca" id="busca">
+            </div>
             <label for="tipo">Tipo:</label>
             <select name="tipo" id="tipo">
                 <option value="0">Escolha</option>
@@ -41,7 +56,7 @@ include_once('pessoa.php');
                 <option value="2">Título</option>
                 <option value="3">Conteúdo</option>
             </select>
-        <button type='submit'>Buscar</button>
+            <button type='submit' class="btn btn-dark">Buscar</button>
 
         </fieldset>
     </form>
