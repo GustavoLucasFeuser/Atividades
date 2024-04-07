@@ -7,7 +7,7 @@ include_once('pessoa.php');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listagem de pessoas</title>
+    <title>Listagem de notícias</title>
 </head>
 <body>
     <!-- Formulário de Cadastro -->
@@ -19,9 +19,9 @@ include_once('pessoa.php');
                 <label for="id">Id:</label>
                 <input type="text" name="id" id="id" value="<?=isset($contato)?$contato->getId():0 ?>" readonly>
                 <label for="nome">Título:</label>
-                <input type="text" name="titulo" id="titulo" value="<?php if(isset($contato)) echo $contato->getNome()?>">
+                <input type="text" name="titulo" id="titulo" value="<?php if(isset($contato)) echo $contato->getTitulo()?>">
                 <label for="conteudo">Conteúdo:</label>
-                <textarea name="conteudo" id="conteudo" cols="30" rows="1" value="<?php if(isset($contato)) echo $contato->getTelefone()?>"></textarea>
+                <input type="text" name="conteudo" id="conteudo" value="<?php if(isset($contato)) echo $contato->getConteudo()?>">
                 <button type='submit' name='acao' value='salvar'>Salvar</button>
                 <button type='submit' name='acao' value='excluir'>Excluir</button>
                 <button type='reset'>Cancelar</button>
@@ -38,24 +38,24 @@ include_once('pessoa.php');
             <select name="tipo" id="tipo">
                 <option value="0">Escolha</option>
                 <option value="1">Id</option>
-                <option value="2">Nome</option>
-                <option value="3">Telefone</option>
+                <option value="2">Título</option>
+                <option value="3">Conteúdo</option>
             </select>
         <button type='submit'>Buscar</button>
 
         </fieldset>
     </form>
     <hr>
-    <h1>Lista meus contatos</h1>
+    <h1>Lista das notícias</h1>
     <table>
         <tr>
             <th>Id</th>
-            <th>Nome</th>
-            <th>Telefone</th>
+            <th>Título</th>
+            <th>Conteúdo</th>
         </tr>
         <?php  
             foreach($lista as $pessoa){ // monta a tabela com base na variável lista, criada no pessoa.php
-                echo "<tr><td><a href='index.php?id=".$pessoa->getId()."'>".$pessoa->getId()."</a></td><td>".$pessoa->getNome()."</td><td>".$pessoa->getTelefone()."</td></tr>";
+                echo "<tr><td><a href='index.php?id=".$pessoa->getId()."'>".$pessoa->getId()."</a></td><td>".$pessoa->getTitulo()."</td><td>".$pessoa->getConteudo()."</td></tr>";
             }     
         ?>
     </table>

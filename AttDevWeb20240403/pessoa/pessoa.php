@@ -7,19 +7,19 @@ require_once("../classes/Pessoa.class.php");
 $id =  isset($_GET['id'])?$_GET['id']:0; // pegar busca
 $msg =  isset($_GET['MSG'])?$_GET['MSG']:""; // pegar busca
 if ($id > 0){
-    $contato = Pessoa::listar(1,$id)[0]; // cria a variável contato que será utilizada para preencher o formulário quando o usuário clicar para alterar um registro
+    $contato = Noticia::listar(1,$id)[0]; // cria a variável contato que será utilizada para preencher o formulário quando o usuário clicar para alterar um registro
 }
 
 // Inserir e alterar dados
 if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     $id =  isset($_POST['id'])?$_POST['id']:0; 
-    $nome =  isset($_POST['nome'])?$_POST['nome']:0; 
-    $telefone =  isset($_POST['telefone'])?$_POST['telefone']:0; 
+    $titulo =  isset($_POST['titulo'])?$_POST['titulo']:0; 
+    $conteudo =  isset($_POST['conteudo'])?$_POST['conteudo']:0; 
     $acao =  isset($_POST['acao'])?$_POST['acao']:0; 
 
     try{
         // criar o objeto Pessoa que irá persistir os dados 
-        $pessoa = new Pessoa($id,$nome,$telefone);
+        $noticia = new Noticia($id,$titulo,$conteudo);
     }catch(Exception $e){ // caso ocorra algum erro na validação das regras de negócio dispara uma exceção
         header('location: index.php?MSG=Erro: '.$e->getMessage()); // direciona para o incio com a mensagem de erro
     }
@@ -27,13 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     if($acao == 'salvar'){
         if($id > 0)//alterando
             // chamar o método para alterar uma pessoa
-            $resultado = $pessoa->alterar();
+            $resultado = $noticia->alterar();
         else // inserindo                        
             // chamar o método para incluir uma pessoa
-            $resultado = $pessoa->incluir();
+            $resultado = $noticia->incluir();
     }elseif ($acao == 'excluir'){
         // chamar o método para exluir uma pessoa
-        $resultado = $pessoa->excluir();
+        $resultado = $noticia->excluir();
     }
     if ($resultado)
         header('location: index.php?MSG=Dados inseridos/Alterados com sucesso!');
@@ -43,5 +43,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     //  Listagem e Pesquisa
     $busca =  isset($_GET['busca'])?$_GET['busca']:0; // pegar informação da busca
     $tipo =  isset($_GET['tipo'])?$_GET['tipo']:0; // pegar tipo de busca  
-    $lista = Pessoa::listar($tipo,$busca); // chama o método listar da classe Pessoa de forma estática (sem criar o objeto Pessoa) para preencher a variável lista que será usada para montar a tabela que lista todos os contatos
+    $lista = Noticia::listar($tipo,$busca); // chama o método listar da classe Pessoa de forma estática (sem criar o objeto Pessoa) para preencher a variável lista que será usada para montar a tabela que lista todos os contatos
 }
