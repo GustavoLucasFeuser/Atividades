@@ -13,10 +13,10 @@ include_once('pessoa.php');
 </head>
 <body>
     <!-- Formulário de Cadastro -->
-    <h1>CRUD de Notícias</h1>
+    <h1 style="text-align:center;">CRUD de Notícias</h1><br>
     <h3><?=$msg?></h3>
     <form action="pessoa.php" method="post">
-        <div style="background-color: black; height: 400px; width: 400px; margin-left: 40%; border-radius: 10px;">
+        <div style="background-color: black; height: 400px; width: 400px; margin-left: 37%; border-radius: 10px;">
         <div style="text-align: center;">
         <fieldset>
             <legend style="color: white; text-align: center;">Cadastro de Notícias</legend>
@@ -32,22 +32,28 @@ include_once('pessoa.php');
                 <label for="conteudo" style="color:white;">Conteúdo:</label>
                 <input class="form-control" type="text" name="conteudo" id="conteudo" value="<?php if(isset($contato)) echo $contato->getConteudo()?>" style="margin-left: 45%;">
                 </div>
+                <div style="margin-top: 10%;">
                 <button type='submit' name='acao' value='salvar' class="btn btn-dark" >Salvar</button>
                 <button type='submit' name='acao' value='excluir' class="btn btn-dark">Excluir</button>
 
                 <button type='reset' class="btn btn-dark">Cancelar</button>
+                </div>
         </fieldset>
         </div>
         </div>
-    </form>
+    </form><br>
     <hr>
     <!-- Formulário de pesquisa -->
     <form action="" method="get">
         <fieldset>
-            <legend>Pesquisa</legend>
-            <div class="col-md-2">
+            <div style="background-color: black; height: 300px; width: 400px; margin-left: 37%; border-radius: 10px;">
+            <div style="text-align: center; color:white;">
+            <legend style="color: white; text-align: center;">Pesquisa</legend>
+            <div style="margin-left:25%;">
+            <div class="col-md-8">
             <label for="busca">Busca:</label>
-            <input class="form-control" type="text" name="busca" id="busca">
+            <input class="form-control" type="text" name="busca" id="busca"><br><br>
+            </div>
             </div>
             <label for="tipo">Tipo:</label>
             <select name="tipo" id="tipo">
@@ -57,11 +63,14 @@ include_once('pessoa.php');
                 <option value="3">Conteúdo</option>
             </select>
             <button type='submit' class="btn btn-dark">Buscar</button>
-
+            </div>
         </fieldset>
+        </div>
     </form>
     <hr>
-    <h1>Lista das notícias</h1>
+    <h1 style="text-align:center;">Lista das notícias</h1><br>
+    <div style="margin-left:34%;">
+    <div class="col-md-6">
     <table>
         <tr>
             <th>Id</th>
@@ -70,9 +79,11 @@ include_once('pessoa.php');
         </tr>
         <?php  
             foreach($lista as $pessoa){ // monta a tabela com base na variável lista, criada no pessoa.php
-                echo "<tr><td><a href='index.php?id=".$pessoa->getId()."'>".$pessoa->getId()."</a></td><td>".$pessoa->getTitulo()."</td><td>".$pessoa->getConteudo()."</td></tr>";
+                echo "<table class='table table-dark table-striped'><tr><td><a href='index.php?id=".$pessoa->getId()."'>".$pessoa->getId()."</a></td><td>".$pessoa->getTitulo()."</td><td>".$pessoa->getConteudo()."</td></tr> </table>";
             }     
         ?>
     </table>
+    </div>
+    </div>
 </body>
 </html>
