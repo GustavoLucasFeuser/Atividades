@@ -15,68 +15,77 @@ if ($conn->connect_error) {
 
 $message = "";
 
+// Inicializa a variável $formas para evitar erros
+$formas = null;
+
 // Funções CRUD para as formas
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica se é uma exclusão
     if (isset($_POST['delete'])) {
         $id = $_POST['id'];
-        $sql = "DELETE FROM forma WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param('i', $id);
-        if ($stmt->execute()) {
+        $sql = "DELETE FROM forma WHERE id = '$id'";
+        if ($conn->query($sql) === TRUE) {
             $message = "Forma excluída com sucesso!";
         } else {
             $message = "Erro ao excluir forma: " . $conn->error;
         }
+    } elseif (isset($_POST['search'])) {
+        // Trata pesquisa
+        $search_term = $_POST['search_term'];
+        $search_query = "SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade_simbolo 
+                         FROM forma f 
+                         LEFT JOIN unidade_medida u ON f.unidade_medida_id = u.id 
+                         WHERE f.tipo LIKE '%$search_term%' 
+                         OR f.cor LIKE '%$search_term%' 
+                         OR u.nome LIKE '%$search_term%'
+                         ORDER BY f.tipo, IF(f.tipo = 'quadrado', f.lado, f.raio) DESC";
+        $formas = $conn->query($search_query);
     } else {
         // Trata inserção/atualização
-        $id = isset($_POST['id']) ? $_POST['id'] : null;
+        $id = $_POST['id'];
         $tipo = $_POST['tipo'];
         $cor = $_POST['cor'];
         $unidade_medida_id = $_POST['unidade_medida_id'];
 
-        // Valida unidade de medida
         if (!in_array($unidade_medida_id, ['1', '2', '3'])) {
             $message = "Erro: Unidade de medida inválida!";
         } else {
-            if ($tipo == 'quadrado') {
-                $lado = $_POST['lado'];
-                if ($id) {
-                    // Atualiza forma existente
-                    $sql = "UPDATE forma SET tipo=?, lado=?, cor=?, unidade_medida_id=? WHERE id=?";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param('sdsii', $tipo, $lado, $cor, $unidade_medida_id, $id);
+            if ($id) {
+                // Atualiza a forma existente
+                if ($tipo == 'quadrado') {
+                    $lado = $_POST['lado'];
+                    $sql = "UPDATE forma SET tipo='$tipo', lado='$lado', cor='$cor', unidade_medida_id='$unidade_medida_id' WHERE id='$id'";
                 } else {
-                    // Insere nova forma
-                    $sql = "INSERT INTO forma (tipo, lado, cor, unidade_medida_id) VALUES (?, ?, ?, ?)";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param('sdsi', $tipo, $lado, $cor, $unidade_medida_id);
+                    $raio = $_POST['raio'];
+                    $sql = "UPDATE forma SET tipo='$tipo', raio='$raio', cor='$cor', unidade_medida_id='$unidade_medida_id' WHERE id='$id'";
                 }
             } else {
-                $raio = $_POST['raio'];
-                if ($id) {
-                    // Atualiza forma existente
-                    $sql = "UPDATE forma SET tipo=?, raio=?, cor=?, unidade_medida_id=? WHERE id=?";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param('sdsii', $tipo, $raio, $cor, $unidade_medida_id, $id);
+                // Insere uma nova forma
+                if ($tipo == 'quadrado') {
+                    $lado = $_POST['lado'];
+                    $sql = "INSERT INTO forma (tipo, lado, cor, unidade_medida_id) VALUES ('$tipo', '$lado', '$cor', '$unidade_medida_id')";
                 } else {
-                    // Insere nova forma
-                    $sql = "INSERT INTO forma (tipo, raio, cor, unidade_medida_id) VALUES (?, ?, ?, ?)";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param('sdsi', $tipo, $raio, $cor, $unidade_medida_id);
+                    $raio = $_POST['raio'];
+                    $sql = "INSERT INTO forma (tipo, raio, cor, unidade_medida_id) VALUES ('$tipo', '$raio', '$cor', '$unidade_medida_id')";
                 }
             }
-            if ($stmt->execute()) {
-                $message = $id ? "Forma atualizada com sucesso!" : "Forma cadastrada com sucesso!";
+
+            if ($conn->query($sql) === TRUE) {
+                $message = "Forma cadastrada/atualizada com sucesso!";
             } else {
-                $message = "Erro ao salvar forma: " . $conn->error;
+                $message = "Erro ao cadastrar/atualizar forma: " . $conn->error;
             }
         }
     }
 }
 
-// Obtém todas as formas do banco de dados
-$formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade_simbolo FROM forma f LEFT JOIN unidade_medida u ON f.unidade_medida_id = u.id ORDER BY f.tipo, IF(f.tipo = 'quadrado', f.lado, f.raio) DESC");
+// Se não houver pesquisa, carrega todas as formas
+if ($formas === null) {
+    $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade_simbolo 
+                            FROM forma f 
+                            LEFT JOIN unidade_medida u ON f.unidade_medida_id = u.id 
+                            ORDER BY f.tipo, IF(f.tipo = 'quadrado', f.lado, f.raio) DESC");
+}
 
 ?>
 
@@ -111,6 +120,13 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
         <p><?php echo $message; ?></p>
     <?php endif; ?>
 
+    <!-- Formulário de pesquisa -->
+    <form method="post">
+        <label for="search_term">Pesquisar:</label>
+        <input type="text" name="search_term" id="search_term">
+        <button type="submit" name="search">Pesquisar</button>
+    </form>
+
     <form method="post">
         <input type="hidden" name="id" id="id">
         <label for="tipo">Tipo:</label>
@@ -141,56 +157,38 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
         <label for="cor">Cor:</label>
         <input type="color" name="cor" id="cor" required>
         <button type="submit" name="create">Cadastrar</button>
-        <button type="submit" name="update" id="update-button" style="display: none;">Atualizar</button>
+        <button type="submit" name="update">Atualizar</button>
     </form>
 
     <h2>Listagem de Formas</h2>
     <?php if ($formas->num_rows > 0): ?>
         <?php while($row = $formas->fetch_assoc()): ?>
             <?php
-                // Define o tamanho e estilo com base na unidade de medida
                 $tamanho = $row['tipo'] == 'quadrado' ? $row['lado'] : $row['raio'] * 2;
                 $unidade = $row['unidade_simbolo'];
-                
-                // Aplica o estilo com base na unidade de medida
-                if ($unidade == '%') {
-                    $style = "width: $tamanho; height: $tamanho;";
-                } else {
-                    $style = $row['tipo'] == 'quadrado'
-                        ? "width: {$tamanho}{$unidade}; height: {$tamanho}{$unidade};"
-                        : "width: {$tamanho}{$unidade}; height: {$tamanho}{$unidade}; border-radius: 50%;";
-                }
+                $style = $row['tipo'] == 'quadrado'
+                    ? "width: {$tamanho}{$unidade}; height: {$tamanho}{$unidade};"
+                    : "width: {$tamanho}{$unidade}; height: {$tamanho}{$unidade}; border-radius: 50%;";
             ?>
-            <?php if ($row['tipo'] == 'quadrado'): ?>
-                <div class="forma" style="background-color: <?php echo $row['cor']; ?>; <?php echo $style; ?>">
-                    <span>
-                        ID: <?php echo $row['id']; ?><br>
-                        Tipo: Quadrado<br>
+            <div class="forma" style="background-color: <?php echo $row['cor']; ?>; <?php echo $style; ?>">
+                <span>
+                    ID: <?php echo $row['id']; ?><br>
+                    Tipo: <?php echo ucfirst($row['tipo']); ?><br>
+                    <?php if ($row['tipo'] == 'quadrado'): ?>
                         Lado: <?php echo $row['lado']; ?> <?php echo $row['unidade_simbolo']; ?><br>
-                        <button onclick="editForma('<?php echo $row['id']; ?>', 'quadrado', '<?php echo $row['lado']; ?>', '', '<?php echo $row['cor']; ?>', '<?php echo $row['unidade_medida_id']; ?>')">Editar</button>
-                        <form method="post" style="display:inline;">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="delete">Excluir</button>
-                        </form>
-                    </span>
-                </div>
-            <?php else: ?>
-                <div class="forma" style="background-color: <?php echo $row['cor']; ?>; <?php echo $style; ?>">
-                    <span>
-                        ID: <?php echo $row['id']; ?><br>
-                        Tipo: Círculo<br>
+                    <?php else: ?>
                         Raio: <?php echo $row['raio']; ?> <?php echo $row['unidade_simbolo']; ?><br>
-                        <button onclick="editForma('<?php echo $row['id']; ?>', 'circulo', '', '<?php echo $row['raio']; ?>', '<?php echo $row['cor']; ?>', '<?php echo $row['unidade_medida_id']; ?>')">Editar</button>
-                        <form method="post" style="display:inline;">
-                            <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                            <button type="submit" name="delete">Excluir</button>
-                        </form>
-                    </span>
-                </div>
-            <?php endif; ?>
+                    <?php endif; ?>
+                    <button onclick="editForma('<?php echo $row['id']; ?>', '<?php echo $row['tipo']; ?>', '<?php echo $row['lado']; ?>', '<?php echo $row['raio']; ?>', '<?php echo $row['cor']; ?>', '<?php echo $row['unidade_medida_id']; ?>')">Editar</button>
+                    <form method="post" style="display:inline;">
+                        <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                        <button type="submit" name="delete">Excluir</button>
+                    </form>
+                </span>
+            </div>
         <?php endwhile; ?>
     <?php else: ?>
-        <p>Nenhuma forma cadastrada.</p>
+        <p>Nenhuma forma encontrada.</p>
     <?php endif; ?>
 
     <script>
@@ -198,7 +196,6 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
             var tipo = document.getElementById("tipo").value;
             document.getElementById("quadrado-fields").style.display = tipo == "quadrado" ? "block" : "none";
             document.getElementById("circulo-fields").style.display = tipo == "circulo" ? "block" : "none";
-            document.getElementById("update-button").style.display = tipo ? "inline" : "none";
         }
 
         function editForma(id, tipo, lado, raio, cor, unidade_medida_id) {
