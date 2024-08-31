@@ -4,6 +4,8 @@ $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "geometria";
+require_once 'Quadrado.php';
+require_once 'Circulo.php';
 
 // Cria a conexão
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -15,7 +17,6 @@ if ($conn->connect_error) {
 
 $message = "";
 
-// Funções CRUD para as formas
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Verifica se é uma exclusão
     if (isset($_POST['delete'])) {
@@ -26,40 +27,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $message = "Erro ao excluir forma: " . $conn->error;
         }
-    } else {
+    }
+
+else {
         // Trata inserção/atualização
         $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : '';
         $cor = isset($_POST['cor']) ? $_POST['cor'] : '';
         $unidade_medida_id = isset($_POST['unidade_medida_id']) ? $_POST['unidade_medida_id'] : '';
 
-        if (isset($_POST['update'])) {
-            // Atualiza forma existente
-            $id = $_POST['id'];
-            if ($tipo == 'quadrado') {
-                $lado = isset($_POST['lado']) ? $_POST['lado'] : '';
-                $sql = "UPDATE forma SET tipo='$tipo', lado='$lado', cor='$cor', unidade_medida_id='$unidade_medida_id' WHERE id='$id'";
-            } else {
-                $raio = isset($_POST['raio']) ? $_POST['raio'] : '';
-                $sql = "UPDATE forma SET tipo='$tipo', raio='$raio', cor='$cor', unidade_medida_id='$unidade_medida_id' WHERE id='$id'";
-            }
-        } else {
-            // Insere nova forma
-            if ($tipo == 'quadrado') {
-                $lado = isset($_POST['lado']) ? $_POST['lado'] : '';
-                $sql = "INSERT INTO forma (tipo, lado, cor, unidade_medida_id) VALUES ('$tipo', '$lado', '$cor', '$unidade_medida_id')";
-            } else {
-                $raio = isset($_POST['raio']) ? $_POST['raio'] : '';
-                $sql = "INSERT INTO forma (tipo, raio, cor, unidade_medida_id) VALUES ('$tipo', '$raio', '$cor', '$unidade_medida_id')";
-            }
-        }
+        if ($tipo == 'quadrado') {
+            $lado = isset($_POST['lado']) ? $_POST['lado'] : '';
 
-        if ($conn->query($sql) === TRUE) {
-            $message = isset($_POST['update']) ? "Forma atualizada com sucesso!" : "Forma cadastrada com sucesso!";
+            if (isset($_POST['update'])) {
+                // Atualiza quadrado existente
+                $id = $_POST['id'];
+                $message = editarQuadrado($conn, $id, $lado, $cor, $unidade_medida_id);
+            } else {
+                // Insere novo quadrado
+                $message = criarQuadrado($conn, $lado, $cor, $unidade_medida_id);
+            }
         } else {
-            $message = "Erro ao cadastrar/atualizar forma: " . $conn->error;
+          if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : '';
+
+    if ($tipo == 'circulo') {
+        $cor = isset($_POST['cor']) ? $_POST['cor'] : '';
+        $unidade_medida_id = isset($_POST['unidade_medida_id']) ? $_POST['unidade_medida_id'] : '';
+        $raio = isset($_POST['raio']) ? $_POST['raio'] : '';
+        
+        $circulo = new Circulo(null, $raio, $cor);
+        $circulo->unidade_medida_id = $unidade_medida_id; // Supondo que este atributo exista
+
+        if (isset($_POST['update'])) {
+            $id = $_POST['id'];
+            $circulo->setId($id);
+            $message = $circulo->editar($conn);
+        } elseif (isset($_POST['delete'])) {
+            $id = $_POST['id'];
+            $circulo->setId($id);
+            $message = $circulo->excluir($conn);
+        } else {
+            $message = $circulo->criar($conn);
+        }
+    } else {
+        
+    }
+}
         }
     }
 }
+
 
 // Pesquisa
 $search_query = "";
