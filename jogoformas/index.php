@@ -28,9 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $message = "Erro ao excluir forma: " . $conn->error;
         }
-    }
-
-else {
+    } else {
         // Trata inserção/atualização
         $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : '';
         $cor = isset($_POST['cor']) ? $_POST['cor'] : '';
@@ -47,37 +45,37 @@ else {
                 // Insere novo quadrado
                 $message = criarQuadrado($conn, $lado, $cor, $unidade_medida_id);
             }
-        } else {
-          if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : '';
+        } elseif ($tipo == 'circulo') {
+            $raio = isset($_POST['raio']) ? $_POST['raio'] : '';
 
-    if ($tipo == 'circulo') {
-        $cor = isset($_POST['cor']) ? $_POST['cor'] : '';
-        $unidade_medida_id = isset($_POST['unidade_medida_id']) ? $_POST['unidade_medida_id'] : '';
-        $raio = isset($_POST['raio']) ? $_POST['raio'] : '';
-        
-        $circulo = new Circulo(null, $raio, $cor);
-        $circulo->unidade_medida_id = $unidade_medida_id; // Supondo que este atributo exista
+            if (isset($_POST['update'])) {
+                $id = $_POST['id'];
+                $circulo = new Circulo($id, $raio, $cor);
+                $circulo->unidade_medida_id = $unidade_medida_id;
+                $message = $circulo->editar($conn);
+            } else {
+                $circulo = new Circulo(null, $raio, $cor);
+                $circulo->unidade_medida_id = $unidade_medida_id;
+                $message = $circulo->criar($conn);
+            }
+        } elseif ($tipo == 'triangulo') {
+            $lado1 = isset($_POST['lado1']) ? $_POST['lado1'] : '';
+            $lado2 = isset($_POST['lado2']) ? $_POST['lado2'] : '';
+            $lado3 = isset($_POST['lado3']) ? $_POST['lado3'] : '';
 
-        if (isset($_POST['update'])) {
-            $id = $_POST['id'];
-            $circulo->setId($id);
-            $message = $circulo->editar($conn);
-        } elseif (isset($_POST['delete'])) {
-            $id = $_POST['id'];
-            $circulo->setId($id);
-            $message = $circulo->excluir($conn);
-        } else {
-            $message = $circulo->criar($conn);
+            if (isset($_POST['update'])) {
+                $id = $_POST['id'];
+                $triangulo = new Triangulo($id, $lado1, $lado2, $lado3, $cor);
+                $triangulo->unidade_medida_id = $unidade_medida_id;
+                $message = $triangulo->editar($conn);
+            } else {
+                $triangulo = new Triangulo(null, $lado1, $lado2, $lado3, $cor);
+                $triangulo->unidade_medida_id = $unidade_medida_id;
+                $message = $triangulo->criar($conn);
+            }
         }
-    } else {
-        
     }
 }
-        }
-    }
-}
-
 
 // Pesquisa
 $search_query = "";
@@ -171,7 +169,7 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
         </div>
 
         <div id="triangulo-fields" style="display: none;">
-            <label for="lado">Lado 1:</label>
+            <label for="lado1">Lado 1:</label>
             <input type="text" name="lado1" id="lado1">
             <label for="lado2">Lado 2:</label>
             <input type="text" name="lado2" id="lado2">
@@ -198,110 +196,43 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
         </select>
 
         <label for="search_cor">Cor:</label>
-        <input type="text" name="search_cor" id="search_cor" placeholder="#RRGGBB">
+        <input type="color" name="search_cor" id="search_cor">
 
-        <label for="search_lado">Lado:</label>
+        <label for="search_lado">Lado (Quadrado):</label>
         <input type="text" name="search_lado" id="search_lado">
 
-        <label for="search_raio">Raio:</label>
+        <label for="search_raio">Raio (Círculo):</label>
         <input type="text" name="search_raio" id="search_raio">
 
         <button type="submit" name="search">Pesquisar</button>
     </form>
 
-    <?php if ($formas && $formas->num_rows > 0): ?>
-        <?php while($row = $formas->fetch_assoc()): ?>
-            <?php
-                // Define o tamanho da forma de acordo com o tipo
-                $unidade = $row['unidade_simbolo'];
-                $style = '';
-                if ($row['tipo'] === 'quadrado') {
-                    $style = "width: {$row['lado']}{$unidade}; height: {$row['lado']}{$unidade};";
-                    $cor_hex = $row['cor'];
-                } elseif($row['tipo'] === 'circulo') {
-                    $style = "width: {$row['raio']}{$unidade}; height: {$row['raio']}{$unidade}; border-radius: 50%;";
-                    $cor_hex = $row['cor'];
-                } elseif($row['tipo'] === 'triangulo') {
-                    $style = "width: 0; height: 0; border-left: {$row['lado1']}{$unidade} solid transparent; border-right: {$row['lado2']}{$unidade} solid transparent; border-bottom: {$row['lado3']}{$unidade} solid {$row['cor']};";
-                    $cor_hex = $row['cor'];
-                }
-            ?>
-            <?php if ($row['tipo'] === 'quadrado'): ?>
-    <div class="forma" style="background-color: <?php echo $cor_hex; ?>; <?php echo $style; ?>">
-        <span>
-            ID: <?php echo $row['id']; ?><br>
-            Tipo: Quadrado<br>
-            Lado: <?php echo $row['lado']; ?> <?php echo $row['unidade_simbolo']; ?><br>
-            Cor: <?php echo $cor_hex; ?><br>
-            <button onclick="editForma('<?php echo $row['id']; ?>', 'quadrado', '<?php echo $row['lado']; ?>', '', '<?php echo $cor_hex; ?>', '<?php echo $row['unidade_medida_id']; ?>')">Editar</button>
-            <form method="post" style="display:inline;">
-                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+    <?php while ($forma = $formas->fetch_assoc()): ?>
+        <div class="forma" style="background-color: <?php echo $forma['cor']; ?>; width: 100px; height: 100px;">
+            <span>
+                Tipo: <?php echo ucfirst($forma['tipo']); ?><br>
+                <?php if ($forma['tipo'] == 'quadrado'): ?>
+                    Lado: <?php echo $forma['lado'] . " " . $forma['unidade_simbolo']; ?><br>
+                <?php elseif ($forma['tipo'] == 'circulo'): ?>
+                    Raio: <?php echo $forma['raio'] . " " . $forma['unidade_simbolo']; ?><br>
+                <?php elseif ($forma['tipo'] == 'triangulo'): ?>
+                    Lados: <?php echo $forma['lado1'] . ", " . $forma['lado2'] . ", " . $forma['lado3'] . " " . $forma['unidade_simbolo']; ?><br>
+                <?php endif; ?>
+                Cor: <?php echo $forma['cor']; ?>
+            </span>
+            <form method="post" action="">
+                <input type="hidden" name="id" value="<?php echo $forma['id']; ?>">
                 <button type="submit" name="delete">Excluir</button>
             </form>
-        </span>
-    </div>
-<?php elseif($row['tipo'] === 'circulo'): ?>
-    <div class="forma" style="background-color: <?php echo $cor_hex; ?>; <?php echo $style; ?>">
-        <span>
-            ID: <?php echo $row['id']; ?><br>
-            Tipo: Círculo<br>
-            Raio: <?php echo $row['raio']; ?> <?php echo $row['unidade_simbolo']; ?><br>
-            Cor: <?php echo $cor_hex; ?><br>
-            <button onclick="editForma('<?php echo $row['id']; ?>', 'circulo', '', '<?php echo $row['raio']; ?>', '<?php echo $cor_hex; ?>', '<?php echo $row['unidade_medida_id']; ?>')">Editar</button>
-            <form method="post" style="display:inline;">
-                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                <button type="submit" name="delete">Excluir</button>
-            </form>
-        </span>
-    </div>
-<?php elseif($row['tipo'] === 'triangulo'): ?>
-    <div class="forma" style="background-color: <?php echo $cor_hex; ?>; <?php echo $style; ?>">
-        <span>
-            ID: <?php echo $row['id']; ?><br>
-            Tipo: Triângulo<br>
-            Lado1: <?php echo $row['lado1']; ?> <?php echo $row['unidade_simbolo']; ?><br>
-            Lado2: <?php echo $row['lado2']; ?> <?php echo $row['unidade_simbolo']; ?><br>
-            Lado3: <?php echo $row['lado3']; ?> <?php echo $row['unidade_simbolo']; ?><br>
-            Tipo: <?php echo $row['tipot']; ?><br>
-            Cor: <?php echo $cor_hex; ?><br>
-            <button onclick="editForma('<?php echo $row['id']; ?>', 'triangulo', '<?php echo $row['lado1']; ?>', '<?php echo $row['lado2']; ?>', '<?php echo $row['lado3']; ?>', '<?php echo $cor_hex; ?>', '<?php echo $row['unidade_medida_id']; ?>')">Editar</button>
-            <form method="post" style="display:inline;">
-                <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                <button type="submit" name="delete">Excluir</button>
-            </form>
-        </span>
-    </div>
-<?php endif; ?>
-
-            <?php endif; ?>
-        <?php endwhile; ?>
-    <?php else: ?>
-        <p>Nenhuma forma encontrada.</p>
-    <?php endif; ?>
-
+        </div>
+    <?php endwhile; ?>
+    
     <script>
         function toggleFields() {
             var tipo = document.getElementById("tipo").value;
-            document.getElementById("quadrado-fields").style.display = tipo == "quadrado" ? "block" : "none";
-            document.getElementById("circulo-fields").style.display = tipo == "circulo" ? "block" : "none";
-            document.getElementById("triangulo-fields").style.display = tipo == "triangulo" ? "block" : "none";
-
-        }
-
-        function editForma(id, tipo, lado, lado1, lado2, lado3, tipot, raio, cor, unidade_medida_id) {
-            document.getElementById("id").value = id;
-            document.getElementById("tipo").value = tipo;
-            document.getElementById("lado").value = lado;
-            document.getElementById("lado1").value = lado1;
-            document.getElementById("lado2").value = lado2;
-            document.getElementById("lado3").value = lado3;
-            document.getElementById("tipot").value = tipot;
-            document.getElementById("raio").value = raio;
-            document.getElementById("cor").value = cor;
-            document.getElementById("unidade_medida_id").value = unidade_medida_id;
-
-            // Mostra campos correspondentes
-            toggleFields();
+            document.getElementById("quadrado-fields").style.display = tipo === "quadrado" ? "block" : "none";
+            document.getElementById("circulo-fields").style.display = tipo === "circulo" ? "block" : "none";
+            document.getElementById("triangulo-fields").style.display = tipo === "triangulo" ? "block" : "none";
         }
     </script>
 </body>
