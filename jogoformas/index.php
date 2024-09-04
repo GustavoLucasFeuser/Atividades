@@ -6,6 +6,7 @@ $password = "";
 $dbname = "geometria";
 require_once 'Quadrado.php';
 require_once 'Circulo.php';
+require_once 'Triangulo.php';
 
 // Cria a conexão
 $conn = new mysqli($servername, $username, $password, $dbname);
