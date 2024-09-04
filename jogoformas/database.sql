@@ -9,8 +9,12 @@ CREATE TABLE IF NOT EXISTS unidade_medida (
 
 CREATE TABLE IF NOT EXISTS forma (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tipo ENUM('quadrado', 'circulo') NOT NULL,
+    tipo ENUM('quadrado', 'circulo', 'triangulo') NOT NULL,
     lado FLOAT DEFAULT NULL,
+    lado1 FLOAT DEFAULT NULL,
+    lado2 FLOAT DEFAULT NULL,
+    lado3 FLOAT DEFAULT NULL,
+    tipot FLOAT DEFAULT NULL,
     raio FLOAT DEFAULT NULL,
     cor VARCHAR(7) NOT NULL,
     unidade_medida_id INT,
