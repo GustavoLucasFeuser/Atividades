@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $triangulo = new Triangulo(null, $lado1, $lado2, $lado3, $cor);
                 $triangulo->unidade_medida_id = $unidade_medida_id;
-                $message = $triangulo->criar($conn);
+                $message = $triangulo->criar($conn, $lado1, $lado2, $lado3);
             }
         }
     }
@@ -103,7 +103,6 @@ if (isset($_POST['search'])) {
 
 // Obtém todas as formas do banco de dados
 $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade_simbolo FROM forma f LEFT JOIN unidade_medida u ON f.unidade_medida_id = u.id $search_query ORDER BY f.tipo, IF(f.tipo = 'quadrado', f.lado, f.raio) DESC");
-
 ?>
 
 <!DOCTYPE html>
@@ -144,7 +143,7 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
             <option value="">Selecione</option>
             <option value="quadrado">Quadrado</option>
             <option value="circulo">Círculo</option>
-            <option value="triangulo">Triangulo</option>
+            <option value="triangulo">Triângulo</option>
         </select>
 
         <label for="unidade_medida_id">Unidade de Medida:</label>
@@ -192,7 +191,7 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
             <option value="">Todos</option>
             <option value="quadrado">Quadrado</option>
             <option value="circulo">Círculo</option>
-            <option value="triangulo">Triangulo</option>
+            <option value="triangulo">Triângulo</option>
         </select>
 
         <label for="search_cor">Cor:</label>
@@ -207,32 +206,35 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
         <button type="submit" name="search">Pesquisar</button>
     </form>
 
-    <?php while ($forma = $formas->fetch_assoc()): ?>
-        <div class="forma" style="background-color: <?php echo $forma['cor']; ?>; width: 100px; height: 100px;">
-            <span>
-                Tipo: <?php echo ucfirst($forma['tipo']); ?><br>
+    <div id="formas-list">
+        <?php while ($forma = $formas->fetch_assoc()): ?>
+            <div class="forma">
                 <?php if ($forma['tipo'] == 'quadrado'): ?>
-                    Lado: <?php echo $forma['lado'] . " " . $forma['unidade_simbolo']; ?><br>
+                    <div style="width: <?php echo $forma['lado']; ?>px; height: <?php echo $forma['lado']; ?>px; background-color: <?php echo $forma['cor']; ?>;"></div>
                 <?php elseif ($forma['tipo'] == 'circulo'): ?>
-                    Raio: <?php echo $forma['raio'] . " " . $forma['unidade_simbolo']; ?><br>
+                    <div style="width: <?php echo $forma['raio']*2; ?>px; height: <?php echo $forma['raio']*2; ?>px; background-color: <?php echo $forma['cor']; ?>; border-radius: 50%;"></div>
                 <?php elseif ($forma['tipo'] == 'triangulo'): ?>
-                    Lados: <?php echo $forma['lado1'] . ", " . $forma['lado2'] . ", " . $forma['lado3'] . " " . $forma['unidade_simbolo']; ?><br>
+                    <div style="width: 0; height: 0; border-left: <?php echo $forma['lado1']; ?>px solid transparent; border-right: <?php echo $forma['lado2']; ?>px solid transparent; border-bottom: <?php echo $forma['lado3']; ?>px solid <?php echo $forma['cor']; ?>;"></div>
                 <?php endif; ?>
-                Cor: <?php echo $forma['cor']; ?>
-            </span>
-            <form method="post" action="">
-                <input type="hidden" name="id" value="<?php echo $forma['id']; ?>">
-                <button type="submit" name="delete">Excluir</button>
-            </form>
-        </div>
-    <?php endwhile; ?>
-    
+                <span><?php echo ucfirst($forma['tipo']); ?></span>
+                <form method="post" style="display:inline;">
+                    <input type="hidden" name="id" value="<?php echo $forma['id']; ?>">
+                    <button type="submit" name="delete">Excluir</button>
+                </form>
+                <form method="post" style="display:inline;">
+                    <input type="hidden" name="id" value="<?php echo $forma['id']; ?>">
+                    <button type="submit" name="edit">Editar</button>
+                </form>
+            </div>
+        <?php endwhile; ?>
+    </div>
+
     <script>
         function toggleFields() {
-            var tipo = document.getElementById("tipo").value;
-            document.getElementById("quadrado-fields").style.display = tipo === "quadrado" ? "block" : "none";
-            document.getElementById("circulo-fields").style.display = tipo === "circulo" ? "block" : "none";
-            document.getElementById("triangulo-fields").style.display = tipo === "triangulo" ? "block" : "none";
+            var tipo = document.getElementById('tipo').value;
+            document.getElementById('quadrado-fields').style.display = (tipo === 'quadrado') ? 'block' : 'none';
+            document.getElementById('circulo-fields').style.display = (tipo === 'circulo') ? 'block' : 'none';
+            document.getElementById('triangulo-fields').style.display = (tipo === 'triangulo') ? 'block' : 'none';
         }
     </script>
 </body>
