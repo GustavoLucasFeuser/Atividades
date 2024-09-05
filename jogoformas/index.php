@@ -17,9 +17,19 @@ if ($conn->connect_error) {
 }
 
 $message = "";
+$formData = [
+    'id' => '',
+    'tipo' => '',
+    'lado' => '',
+    'raio' => '',
+    'lado1' => '',
+    'lado2' => '',
+    'lado3' => '',
+    'cor' => '',
+    'unidade_medida_id' => ''
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verifica se é uma exclusão
     if (isset($_POST['delete'])) {
         $id = $_POST['id'];
         $sql = "DELETE FROM forma WHERE id = '$id'";
@@ -28,8 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $message = "Erro ao excluir forma: " . $conn->error;
         }
+    } elseif (isset($_POST['edit'])) {
+        $id = $_POST['id'];
+        // Busca os dados da forma para preencher o formulário
+        $sql = "SELECT * FROM forma WHERE id = '$id'";
+        $result = $conn->query($sql);
+        if ($result->num_rows > 0) {
+            $formData = $result->fetch_assoc();
+        }
     } else {
-        // Trata inserção/atualização
         $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : '';
         $cor = isset($_POST['cor']) ? $_POST['cor'] : '';
         $unidade_medida_id = isset($_POST['unidade_medida_id']) ? $_POST['unidade_medida_id'] : '';
@@ -38,11 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $lado = isset($_POST['lado']) ? $_POST['lado'] : '';
 
             if (isset($_POST['update'])) {
-                // Atualiza quadrado existente
                 $id = $_POST['id'];
                 $message = editarQuadrado($conn, $id, $lado, $cor, $unidade_medida_id);
             } else {
-                // Insere novo quadrado
                 $message = criarQuadrado($conn, $lado, $cor, $unidade_medida_id);
             }
         } elseif ($tipo == 'circulo') {
@@ -137,13 +152,13 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
     <?php endif; ?>
 
     <form method="post" action="">
-        <input type="hidden" name="id" id="id">
+        <input type="hidden" name="id" id="id" value="<?php echo htmlspecialchars($formData['id']); ?>">
         <label for="tipo">Tipo:</label>
         <select name="tipo" id="tipo" onchange="toggleFields()" required>
             <option value="">Selecione</option>
-            <option value="quadrado">Quadrado</option>
-            <option value="circulo">Círculo</option>
-            <option value="triangulo">Triângulo</option>
+            <option value="quadrado" <?php if ($formData['tipo'] == 'quadrado') echo 'selected'; ?>>Quadrado</option>
+            <option value="circulo" <?php if ($formData['tipo'] == 'circulo') echo 'selected'; ?>>Círculo</option>
+            <option value="triangulo" <?php if ($formData['tipo'] == 'triangulo') echo 'selected'; ?>>Triângulo</option>
         </select>
 
         <label for="unidade_medida_id">Unidade de Medida:</label>
@@ -153,89 +168,109 @@ $formas = $conn->query("SELECT f.*, u.nome as unidade_nome, u.simbolo as unidade
             $unidades = $conn->query("SELECT * FROM unidade_medida");
             while ($unidade = $unidades->fetch_assoc()):
             ?>
-                <option value="<?php echo $unidade['id']; ?>"><?php echo $unidade['nome']; ?> (<?php echo $unidade['simbolo']; ?>)</option>
+                <option value="<?php echo $unidade['id']; ?>" <?php if ($formData['unidade_medida_id'] == $unidade['id']) echo 'selected'; ?>><?php echo $unidade['nome']; ?> (<?php echo $unidade['simbolo']; ?>)</option>
             <?php endwhile; ?>
         </select>
 
-        <div id="quadrado-fields" style="display: none;">
+        <div id="quadrado-fields" style="display: <?php echo $formData['tipo'] == 'quadrado' ? 'block' : 'none'; ?>;">
             <label for="lado">Lado:</label>
-            <input type="text" name="lado" id="lado">
+            <input type="text" name="lado" id="lado" value="<?php echo htmlspecialchars($formData['lado']); ?>">
         </div>
 
-        <div id="circulo-fields" style="display: none;">
+        <div id="circulo-fields" style="display: <?php echo $formData['tipo'] == 'circulo' ? 'block' : 'none'; ?>;">
             <label for="raio">Raio:</label>
-            <input type="text" name="raio" id="raio">
+            <input type="text" name="raio" id="raio" value="<?php echo htmlspecialchars($formData['raio']); ?>">
         </div>
 
-        <div id="triangulo-fields" style="display: none;">
+        <div id="triangulo-fields" style="display: <?php echo $formData['tipo'] == 'triangulo' ? 'block' : 'none'; ?>;">
             <label for="lado1">Lado 1:</label>
-            <input type="text" name="lado1" id="lado1">
+            <input type="text" name="lado1" id="lado1" value="<?php echo htmlspecialchars($formData['lado1']); ?>">
             <label for="lado2">Lado 2:</label>
-            <input type="text" name="lado2" id="lado2">
+            <input type="text" name="lado2" id="lado2" value="<?php echo htmlspecialchars($formData['lado2']); ?>">
             <label for="lado3">Lado 3:</label>
-            <input type="text" name="lado3" id="lado3">
+            <input type="text" name="lado3" id="lado3" value="<?php echo htmlspecialchars($formData['lado3']); ?>">
         </div>
 
-        <label for="cor">Cor:</label>
-        <input type="color" name="cor" id="cor" required>
-        <button type="submit" name="create">Cadastrar</button>
-        <button type="submit" name="update">Atualizar</button>
+        <label for="cor">Cor (em hexadecimal):</label>
+        <input type="text" name="cor" id="cor" value="<?php echo htmlspecialchars($formData['cor']); ?>">
+
+        <?php if ($formData['id']): ?>
+            <button type="submit" name="update">Atualizar</button>
+        <?php else: ?>
+            <button type="submit" name="create">Criar</button>
+        <?php endif; ?>
+        <button type="submit" name="delete">Excluir</button>
     </form>
 
-    <h2>Listagem de Formas</h2>
-
-    <form method="post">
-        <h3>Pesquisar Formas</h3>
+    <form method="post" action="">
         <label for="search_tipo">Tipo:</label>
         <select name="search_tipo" id="search_tipo">
             <option value="">Todos</option>
-            <option value="quadrado">Quadrado</option>
-            <option value="circulo">Círculo</option>
-            <option value="triangulo">Triângulo</option>
+            <option value="quadrado" <?php if (isset($_POST['search_tipo']) && $_POST['search_tipo'] == 'quadrado') echo 'selected'; ?>>Quadrado</option>
+            <option value="circulo" <?php if (isset($_POST['search_tipo']) && $_POST['search_tipo'] == 'circulo') echo 'selected'; ?>>Círculo</option>
+            <option value="triangulo" <?php if (isset($_POST['search_tipo']) && $_POST['search_tipo'] == 'triangulo') echo 'selected'; ?>>Triângulo</option>
         </select>
 
-        <label for="search_cor">Cor:</label>
-        <input type="color" name="search_cor" id="search_cor">
+        <label for="search_cor">Cor (em hexadecimal):</label>
+        <input type="text" name="search_cor" id="search_cor" value="<?php if (isset($_POST['search_cor'])) echo htmlspecialchars($_POST['search_cor']); ?>">
 
-        <label for="search_lado">Lado (Quadrado):</label>
-        <input type="text" name="search_lado" id="search_lado">
+        <label for="search_lado">Lado:</label>
+        <input type="text" name="search_lado" id="search_lado" value="<?php if (isset($_POST['search_lado'])) echo htmlspecialchars($_POST['search_lado']); ?>">
 
-        <label for="search_raio">Raio (Círculo):</label>
-        <input type="text" name="search_raio" id="search_raio">
+        <label for="search_raio">Raio:</label>
+        <input type="text" name="search_raio" id="search_raio" value="<?php if (isset($_POST['search_raio'])) echo htmlspecialchars($_POST['search_raio']); ?>">
 
         <button type="submit" name="search">Pesquisar</button>
     </form>
 
-    <div id="formas-list">
-        <?php while ($forma = $formas->fetch_assoc()): ?>
-            <div class="forma">
-                <?php if ($forma['tipo'] == 'quadrado'): ?>
-                    <div style="width: <?php echo $forma['lado']; ?>px; height: <?php echo $forma['lado']; ?>px; background-color: <?php echo $forma['cor']; ?>;"></div>
-                <?php elseif ($forma['tipo'] == 'circulo'): ?>
-                    <div style="width: <?php echo $forma['raio']*2; ?>px; height: <?php echo $forma['raio']*2; ?>px; background-color: <?php echo $forma['cor']; ?>; border-radius: 50%;"></div>
-                <?php elseif ($forma['tipo'] == 'triangulo'): ?>
-                    <div style="width: 0; height: 0; border-left: <?php echo $forma['lado1']; ?>px solid transparent; border-right: <?php echo $forma['lado2']; ?>px solid transparent; border-bottom: <?php echo $forma['lado3']; ?>px solid <?php echo $forma['cor']; ?>;"></div>
-                <?php endif; ?>
-                <span><?php echo ucfirst($forma['tipo']); ?></span>
-                <form method="post" style="display:inline;">
-                    <input type="hidden" name="id" value="<?php echo $forma['id']; ?>">
-                    <button type="submit" name="delete">Excluir</button>
-                </form>
-                <form method="post" style="display:inline;">
-                    <input type="hidden" name="id" value="<?php echo $forma['id']; ?>">
-                    <button type="submit" name="edit">Editar</button>
-                </form>
-            </div>
-        <?php endwhile; ?>
-    </div>
+    <h2>Formas Cadastradas</h2>
+    <?php if ($formas->num_rows > 0): ?>
+        <div>
+            <?php while ($forma = $formas->fetch_assoc()): ?>
+                <div class="forma" style="background-color: <?php echo htmlspecialchars($forma['cor']); ?>;">
+                    <span>
+                        <strong>Tipo:</strong> <?php echo htmlspecialchars($forma['tipo']); ?><br>
+                        <?php if ($forma['tipo'] == 'quadrado'): ?>
+                            <strong>Lado:</strong> <?php echo htmlspecialchars($forma['lado']); ?><br>
+                        <?php elseif ($forma['tipo'] == 'circulo'): ?>
+                            <strong>Raio:</strong> <?php echo htmlspecialchars($forma['raio']); ?><br>
+                        <?php elseif ($forma['tipo'] == 'triangulo'): ?>
+                            <strong>Lado 1:</strong> <?php echo htmlspecialchars($forma['lado1']); ?><br>
+                            <strong>Lado 2:</strong> <?php echo htmlspecialchars($forma['lado2']); ?><br>
+                            <strong>Lado 3:</strong> <?php echo htmlspecialchars($forma['lado3']); ?><br>
+                        <?php endif; ?>
+                        <strong>Cor:</strong> <?php echo htmlspecialchars($forma['cor']); ?><br>
+                        <strong>Unidade:</strong> <?php echo htmlspecialchars($forma['unidade_nome']); ?> (<?php echo htmlspecialchars($forma['unidade_simbolo']); ?>)<br>
+                        <form method="post" action="">
+                            <input type="hidden" name="id" value="<?php echo htmlspecialchars($forma['id']); ?>">
+                            <input type="hidden" name="tipo" value="<?php echo htmlspecialchars($forma['tipo']); ?>">
+                            <button type="submit" name="edit">Editar</button>
+                        </form>
+                    </span>
+                </div>
+            <?php endwhile; ?>
+        </div>
+    <?php else: ?>
+        <p>Nenhuma forma encontrada.</p>
+    <?php endif; ?>
 
     <script>
         function toggleFields() {
             var tipo = document.getElementById('tipo').value;
-            document.getElementById('quadrado-fields').style.display = (tipo === 'quadrado') ? 'block' : 'none';
-            document.getElementById('circulo-fields').style.display = (tipo === 'circulo') ? 'block' : 'none';
-            document.getElementById('triangulo-fields').style.display = (tipo === 'triangulo') ? 'block' : 'none';
+            document.getElementById('quadrado-fields').style.display = tipo === 'quadrado' ? 'block' : 'none';
+            document.getElementById('circulo-fields').style.display = tipo === 'circulo' ? 'block' : 'none';
+            document.getElementById('triangulo-fields').style.display = tipo === 'triangulo' ? 'block' : 'none';
         }
+
+        // Se o formulário está para edição, mostra os campos apropriados
+        document.addEventListener('DOMContentLoaded', function () {
+            var tipo = document.getElementById('tipo').value;
+            if (tipo) {
+                toggleFields();
+            }
+        });
     </script>
 </body>
 </html>
+
+<?php $conn->close(); ?>
