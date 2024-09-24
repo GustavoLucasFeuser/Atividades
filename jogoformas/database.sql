@@ -7,15 +7,12 @@ CREATE TABLE IF NOT EXISTS unidade_medida (
     simbolo VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE forma (
+CREATE TABLE IF NOT EXISTS forma (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    tipo VARCHAR(50) NOT NULL,
-    lado FLOAT,
-    raio FLOAT,
-    lado1 FLOAT,
-    lado2 FLOAT,
-    lado3 FLOAT,
-    cor VARCHAR(7),
+    tipo ENUM('quadrado', 'circulo') NOT NULL,
+    lado FLOAT DEFAULT NULL,
+    raio FLOAT DEFAULT NULL,
+    cor VARCHAR(7) NOT NULL,
     unidade_medida_id INT,
     FOREIGN KEY (unidade_medida_id) REFERENCES unidade_medida(id)
 );
